@@ -7,7 +7,7 @@ period = 90.days
 # period = -1.days
 
 csv_config = {
-  col_sep: ",",
+  col_sep: "\t",
   row_sep: "\n",
   encoding: 'ISO-8859-1'
 }
@@ -33,7 +33,12 @@ s = CSV.generate(csv_config) do |csv|
     room = rec.room
     if room.present?
       room_id = room.meetingid
-      owner = room.owner
+
+      owner = if room.owner_type == "Space"
+                Space.with_disabled.find_by(id: room.owner_id)
+              elsif room.owner_type == "User"
+                User.with_disabled.find_by(id: room.owner_id)
+              end
       if owner.present?
         institution = owner.institution
         if owner.is_a?(Space)
@@ -66,7 +71,7 @@ s = CSV.generate(csv_config) do |csv|
       rec.published?
     ]
     csv << row
-    puts row.join(", ")
+    puts row.join("\t")
   end
 end
 File.write('/tmp/recordings.csv', s)
